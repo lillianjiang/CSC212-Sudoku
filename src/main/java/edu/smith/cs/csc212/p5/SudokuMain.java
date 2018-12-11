@@ -62,19 +62,29 @@ public class SudokuMain extends GFX {
 	static class SudokuCell {
 		Rectangle2D area;
 		boolean mouseHover;
-		int symbol;
+		SudokuGame game;
+		int i;
+		int j;
+//		int symbol;
 		TextBox display;
 		
 		public SudokuCell(int x, int y, int w, int h) {
 			this.area = new Rectangle2D.Double(x,y,w,h);
 			this.mouseHover = false;
-			this.symbol = 0;
+//			this.symbol = 0;
 			this.display = new TextBox("X");
 		}
 		
-//		public boolean inPlay() {
-//			return symbol == SudokuState.Modula;
-//		}
+		public int getValue() {
+			return game.board[i][j];	
+		}
+		
+		public void setValue(int x) {
+			if(game.isModifiable(i, j) && game.isValid(i,j,x)) {
+				game.board[i][j] = x;
+			}
+		}
+	
 		
 		public void draw(Graphics2D g) {
 			if (mouseHover) {
@@ -83,31 +93,20 @@ public class SudokuMain extends GFX {
 				g.setColor(Color.GRAY);
 			}
 			g.fill(this.area);
-			
-			int[][] model = new int[][] {
-	            {3, 0, 6, 5, 0, 8, 4, 0, 0},
-	            {5, 2, 0, 0, 0, 0, 0, 0, 0},
-	            {0, 8, 7, 0, 0, 0, 0, 3, 1},
-	            {0, 0, 3, 0, 1, 0, 0, 8, 0},
-	            {9, 0, 0, 8, 6, 3, 0, 0, 5},
-	            {0, 5, 0, 0, 9, 0, 6, 0, 0},
-	            {1, 3, 0, 0, 0, 0, 2, 5, 0},
-	            {0, 0, 0, 0, 0, 0, 0, 7, 4},
-	            {0, 0, 5, 2, 0, 6, 3, 0, 0} }; 
+
 	            
-			switch(this.symbol) {	
+			switch(this.game.board[i][j]) {	
 			case 0:
 				this.display.setString("_");
 				break;
 			//dead
-			case 1:
-				for(int i=0;i<9;i++) {
-					for(int j=0;j<9;j++) {
-						this.display.setString(""+model[i][j]);
-					}
-				}
+//			case 1:
+//				
+//						this.display.setString(""+game.board[i][j]);
+//					}
+//				}
 			default:
-				this.display.setString(""+this.symbol);
+				this.display.setString(""+this.getValue());
 				break;
 			}
 			
@@ -140,14 +139,16 @@ public class SudokuMain extends GFX {
 				
 			}
 		}
+		
+//		for(int i=0;i<9;i++) {
+//			for(int j=0;j<9;j++) {
+//				
+//			}
 		for(int x=0;x<9;x++) {
-			this.cgrid.add(new TextboxCell(x+1, 
-					x*size, this.getHeight()*93/100,size-3 , size/2));
+				this.cgrid.add(new TextboxCell(x + 1, x * size, this.getHeight() * 93 / 100, size - 3, size / 2));
+			}
+
 		}
-	
-	
-	}
-	
 	
 	SudokuCell selected = null;
 	@Override
@@ -171,13 +172,13 @@ public class SudokuMain extends GFX {
 			for(TextboxCell numbercell: this.cgrid) {
 				numbercell.mouseHover = numbercell.contains(mouse);
 				if(numbercell.contains(click)) {
-					selected.symbol = numbercell.number;
+					selected.setValue(numbercell.number);
 					selected = null;
 				}
 			}
 		}
 		
-		
+		//if we click on a modula, we change it to modula message.
 		
 		switch(this.state) {
 		case Input:
