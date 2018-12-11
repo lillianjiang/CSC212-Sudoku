@@ -13,11 +13,50 @@ import me.jjfoley.gfx.TextBox;
 
 public class SudokuMain extends GFX {
 	List<SudokuCell> grid = new ArrayList<SudokuCell>();
+	List<TextboxCell> cgrid = new ArrayList<TextboxCell>();
 	TextBox message = new TextBox("Hello World!");
 	SudokuState state = SudokuState.Input;
 
 	public SudokuMain() {
 		this.setupGame();
+	}
+	
+	static class TextboxCell{
+		boolean mouseHover;
+		Rectangle2D area;
+		int number;
+		TextBox select;
+		
+		public TextboxCell(int number, int x, int y, int w, int h) {
+			this.area = new Rectangle2D.Double(x,y,w,h);
+			this.mouseHover = false;
+			this.number=number;
+			this.select = new TextBox(""+number);
+		}
+		
+		
+		public void draw(Graphics2D g) {
+			if (mouseHover) {
+				g.setColor(Color.YELLOW);
+			} else {
+				g.setColor(Color.GRAY);
+			}
+			g.fill(this.area);
+
+			this.select.centerInside(this.area);
+			this.select.setFontSize(30.0);
+			this.select.setColor(Color.black);
+			this.select.draw(g);
+
+		}
+
+		public boolean contains(IntPoint mouse) {
+			if (mouse == null) {
+				return false;
+			}
+			return this.area.contains(mouse);
+		}
+
 	}
 
 	static class SudokuCell {
@@ -79,7 +118,7 @@ public class SudokuMain extends GFX {
 			}
 			
 			this.display.centerInside(this.area);
-			this.display.setFontSize(45.0);
+			this.display.setFontSize(40.0);
 			this.display.setColor(Color.black);
 			this.display.draw(g);
 			
@@ -101,27 +140,48 @@ public class SudokuMain extends GFX {
 				
 			}
 		}
+		for(int x=0;x<9;x++) {
+			this.cgrid.add(new TextboxCell(x+1, 
+					x*size, this.getHeight()*93/100,size-3 , size/2));
+		}
 	
 	
 	}
 	
+	
+	SudokuCell selected = null;
 	@Override
 	public void update(double time) {
 		IntPoint mouse = this.getMouseLocation();
 		IntPoint click = this.processClick();
-		Boolean show = false;
 		for(SudokuCell cell: this.grid) {		
 			cell.mouseHover = cell.contains(mouse);
 			if (cell.contains(click)) {
-				cell.symbol++;
-				show = true;
+				selected = cell;
+				break;
+				//cell.symbol++;
+				//show = true;
 //				this.state = state.Input;
 			}
 		 }
 		
+		if (selected != null) {
+			selected.mouseHover = true;
+		
+			for(TextboxCell numbercell: this.cgrid) {
+				numbercell.mouseHover = numbercell.contains(mouse);
+				if(numbercell.contains(click)) {
+					selected.symbol = numbercell.number;
+					selected = null;
+				}
+			}
+		}
+		
+		
+		
 		switch(this.state) {
 		case Input:
-			this.message.setString("select number from below:");
+			this.message.setString("Select a Number From Below:");
 			break;
 		case Modula:
 			this.message.setString("Can't change the Modula");
@@ -157,13 +217,18 @@ public class SudokuMain extends GFX {
 		for(SudokuCell cell: this.grid) {
 			cell.draw(g);} 
 		
-		
-		Rectangle2D centerText = new Rectangle2D.Double(
-				0,this.getHeight()*9/10, this.getWidth(), this.getHeight()/10);
-		this.message.setFontSize(20.0);
-		this.message.setColor(Color.black);
-	//	this.message.centerInside(centerText);
-		this.message.draw(g);
+		if (this.selected != null) {
+			for(TextboxCell numbercell: this.cgrid) {
+				numbercell.draw(g);
+			}
+			
+			Rectangle2D centerText = new Rectangle2D.Double(
+					0,this.getHeight()*86/100, this.getWidth(), this.getHeight()/10);
+			this.message.setFontSize(15.0);
+			this.message.setColor(Color.black);
+			this.message.centerInside(centerText);
+			this.message.draw(g);
+		}
 		}
 	
 
