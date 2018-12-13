@@ -67,19 +67,28 @@ public class SudokuMain extends GFX {
 		int j;
 //		int symbol;
 		TextBox display;
+		boolean valid = true;
 		
 		public SudokuCell(int x, int y, int w, int h) {
 			this.area = new Rectangle2D.Double(x,y,w,h);
 			this.mouseHover = false;
 //			this.symbol = 0;
-			this.display = new TextBox("X");
+			this.i = 0;
+			this.j = 0;
+			game = new SudokuGame(new int[i][j]);
+			this.display = new TextBox("");
 		}
 		
-		public int getValue() {
+		public int getValue(int i, int j) {
 			return game.board[i][j];	
 		}
 		
 		public void setValue(int x) {
+			
+			if(!game.isValid(i, j, x)) {
+//				this.state = SudokuState.Wrong;
+				this.valid = false;
+			}
 			if(game.isModifiable(i, j) && game.isValid(i,j,x)) {
 				game.board[i][j] = x;
 			}
@@ -93,34 +102,40 @@ public class SudokuMain extends GFX {
 				g.setColor(Color.GRAY);
 			}
 			g.fill(this.area);
-
-	            
-			switch(this.game.board[i][j]) {	
-			case 0:
-				this.display.setString("_");
-				break;
-			//dead
-//			case 1:
-//				
-//						this.display.setString(""+game.board[i][j]);
-//					}
-//				}
-			default:
-				this.display.setString(""+this.getValue());
-				break;
-			}
 			
+			if(!this.valid) {
+				g.setColor(Color.RED);
+			}
+				
+			
+			for (int x = 0; x < 9; x++) {
+				for (int y = 0; y < 9; y++) {
+					switch (this.game.board[x][y]) {
+					case 0:
+					   this.display.setString("_");
+						break;
+					default:
+//						int size = 50;
+//						g.fillRect(i*size, j*size, size-2, size-2);
+						this.display.setString("" + this.getValue(x,y));
+						Rectangle2D spot = new Rectangle2D.Double(x*50,y*50,50-2,50-2);
+						this.display.centerInside(spot);
+						this.display.setFontSize(19.0);
+						this.display.setColor(Color.black);
+					this.display.draw(g);
+					 break;
+					}
+
+				}
+
+			}
+
 			if (mouseHover) {
 				g.setColor(Color.GRAY);
 			} else {
 				g.setColor(Color.GREEN);
 			}
-			
-			this.display.centerInside(this.area);
-			this.display.setFontSize(40.0);
-			this.display.setColor(Color.black);
-			this.display.draw(g);
-			
+
 		}
 
 		public boolean contains(IntPoint mouse) {
@@ -130,20 +145,17 @@ public class SudokuMain extends GFX {
 			return this.area.contains(mouse);
 		}
 	 }
+
+	
 	public void setupGame() {
 		int size = this.getWidth()/10;
 		for(int x=0; x<9;x++) {
 			for(int y=0; y<9;y++) {
 				this.grid.add(new SudokuCell(x*size, y*size, 
 						size-2, size-2));
-				
 			}
 		}
-		
-//		for(int i=0;i<9;i++) {
-//			for(int j=0;j<9;j++) {
-//				
-//			}
+
 		for(int x=0;x<9;x++) {
 				this.cgrid.add(new TextboxCell(x + 1, x * size, this.getHeight() * 93 / 100, size - 3, size / 2));
 			}
@@ -163,6 +175,7 @@ public class SudokuMain extends GFX {
 				//cell.symbol++;
 				//show = true;
 //				this.state = state.Input;
+
 			}
 		 }
 		
@@ -184,6 +197,8 @@ public class SudokuMain extends GFX {
 		case Input:
 			this.message.setString("Select a Number From Below:");
 			break;
+		case Wrong:
+			this.message.setString("Not appropiate number.");
 		case Modula:
 			this.message.setString("Can't change the Modula");
 			break;
