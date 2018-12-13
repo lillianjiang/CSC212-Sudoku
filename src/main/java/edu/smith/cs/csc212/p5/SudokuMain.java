@@ -13,18 +13,45 @@ import me.jjfoley.gfx.GFX;
 import me.jjfoley.gfx.IntPoint;
 import me.jjfoley.gfx.TextBox;
 
+/**
+ * A game of Sudoku
+ * @author Lillian Jiang & A
+ *
+ */
 public class SudokuMain extends GFX {
+
+	//Grid is for 9*9 sudokuCell
 	List<SudokuCell> grid = new ArrayList<SudokuCell>();
+	
+	//Cgrid is for the number selection box
 	List<TextboxCell> cgrid = new ArrayList<TextboxCell>();
+	
+	/*
+	 * message is a small line displayed under the 9*9 grid
+	 * message is an indicator for the player 
+	 * -is the cell a modula?
+	 * -is the number fit for this cell?
+	 */
 	TextBox message = new TextBox("Hello World!");
+	
+	/*
+	 * The Timer
+	 * -display a timer with seconds unit on the left side of screen
+	 */
+	TextBox timer = new TextBox("Time Record!");
+	
+	/*
+	 * state is a enum class that can change message displayed.
+	 */
 	SudokuState state = SudokuState.Input;
 
-	static Color base = new Color(255, 242, 230);
-	static Color pinky = new Color(195, 211, 217);
-	static Color mod = new Color(217, 184, 185);
-	static Color selectcolor = new Color(153, 175, 191);
-	
-	String level = "";
+	final static Color base = new Color(255, 242, 230);
+	final static Color pinky = new Color(195, 211, 217);
+	final static Color mod = new Color(217, 184, 185);
+	final static Color selectcolor = new Color(153, 175, 191);
+
+	long start;
+	long end;
 
 	public SudokuMain() {
 		this.setupGame();
@@ -91,7 +118,7 @@ public class SudokuMain extends GFX {
 		}
 
 		public void setValue(int x) {
-			if (game.isModifiable(i, j) && game.isValid(i, j, x)) {
+			if (blank && game.isValid(i, j, x)) {
 				game.board[i][j] = x;
 			}
 		}
@@ -111,8 +138,6 @@ public class SudokuMain extends GFX {
 				this.display.setString("_");
 				break;
 			default:
-				// int size = 50;
-				// g.fillRect(i*size, j*size, size-2, size-2);
 				this.display.setString("" + this.getValue(i, j));
 				Rectangle2D spot = new Rectangle2D.Double(i * 50, j * 50, 50 - 2, 50 - 2);
 				this.display.centerInside(spot);
@@ -131,16 +156,23 @@ public class SudokuMain extends GFX {
 		}
 	}
 
+	SudokuGame game = null;
+
 	public void setupGame() {
-		this.level =  JOptionPane
-		          .showInputDialog("Which level you want to try? \n easy/medium/difficult");
-		SudokuGame game = null;
-		if (this.level.equals("easy")) {
-			 game = new SudokuGame(SudokuGame.easy);
-		} else if (this.level.equals("medium")) {
-			 game = new SudokuGame(SudokuGame.medium);
+		this.state = SudokuState.Input;
+		this.selected = null;
+		String level = JOptionPane.showInputDialog("Which level you want to try? \n easy/medium/difficult");
+
+		this.start = System.currentTimeMillis() / 1000;
+		end = start;
+		if (level.equals("easy")) {
+			game = new SudokuGame(SudokuGame.easy);
+		} else if (level.equals("medium")) {
+			game = new SudokuGame(SudokuGame.medium);
+		} else if (level.equals("aaa")) {
+			game = new SudokuGame(SudokuGame.aaa);
 		} else {
-			 game = new SudokuGame(SudokuGame.difficult);
+			game = new SudokuGame(SudokuGame.difficult);
 		}
 		int size = this.getWidth() / 10;
 		for (int x = 0; x < 9; x++) {
@@ -159,44 +191,51 @@ public class SudokuMain extends GFX {
 
 	@Override
 	public void update(double time) {
-		IntPoint mouse = this.getMouseLocation();
-		IntPoint click = this.processClick();
-		for (SudokuCell cell : this.grid) {
-			cell.mouseHover = cell.contains(mouse);
-			if (cell.contains(click)) {
-				selected = cell;
-				break;
-
+		if (this.isComplete()) {
+			this.state = SudokuState.PlayerWin;
+			if (this.processClick() != null) {
+				this.setupGame();
 			}
-		}
+		} else {
 
-		/*
-		 * Once We select and clink a cell, we want its to stay green(stay true)
-		 * whenever we move the mouse to elsewhere.
-		 */
-		if (selected != null) {
-			selected.mouseHover = true;
-		}
-		for (TextboxCell numbercell : this.cgrid) {
-			numbercell.mouseHover = numbercell.contains(mouse);
-			if (numbercell.contains(click)) {
-				if (selected.game.isValid(selected.i, selected.j, numbercell.number) && selected.blank) {
-					this.state = state.Input;
-					selected.setValue(numbercell.number);
-				} else if (!selected.blank) {
-					this.state = state.Modula;
-				} else if (!selected.game.isValid(selected.i, selected.j, numbercell.number)) {
-					this.state = state.Wrong;
+			IntPoint mouse = this.getMouseLocation();
+			IntPoint click = this.processClick();
+			for (SudokuCell cell : this.grid) {
+				cell.mouseHover = cell.contains(mouse);
+				if (cell.contains(click)) {
+					selected = cell;
+					break;
 				}
+			}
 
-				selected = null;
+			/*
+			 * Once We select and clink a cell, we want its to stay green(stay true)
+			 * whenever we move the mouse to elsewhere.
+			 */
+			if (selected != null) {
+				selected.mouseHover = true;
+				for (TextboxCell numbercell : this.cgrid) {
+					numbercell.mouseHover = numbercell.contains(mouse);
+					if (numbercell.contains(click)) {
+//						System.out.println("numbercell.click: " + numbercell.number);
+
+						if (selected.game.isValid(selected.i, selected.j, numbercell.number) && selected.blank) {
+							this.state = state.Input;
+//							System.out.println("setValue: " + numbercell.number);
+							selected.setValue(numbercell.number);
+						} else if (!selected.blank) {
+							this.state = state.Modula;
+						} else if (!selected.game.isValid(selected.i, selected.j, numbercell.number)) {
+							this.state = state.Wrong;
+						}
+						selected = null;
+					}
+				}
 			}
 		}
-	
 
 		/*
-		 * When we click on different type of cell,
-		 * the message will show differently.
+		 * When we click on different type of cell, the message will show differently.
 		 * 
 		 */
 		switch (this.state) {
@@ -210,7 +249,7 @@ public class SudokuMain extends GFX {
 			this.message.setString("Modula is NOT changable, Player!");
 			break;
 		case PlayerWin:
-			this.message.setString("You won!");
+			this.message.setString("You win! Click anywhere to restart");
 			break;
 		default:
 			this.message.setString("Select a Number From Below:");
@@ -218,8 +257,16 @@ public class SudokuMain extends GFX {
 		}
 	}
 
+	/*
+	 * When does the game end?
+	 */
+	public boolean isComplete() {
+		return game.isComplete();
+	}
+
 	@Override
 	public void draw(Graphics2D g) {
+
 		g.setColor(Color.white);
 		g.fillRect(0, 0, getWidth(), getHeight());
 
@@ -236,6 +283,27 @@ public class SudokuMain extends GFX {
 				g.setColor(Color.black);
 				g.fillRect(x * size - 2, y * size - 2, size, 2);
 			}
+		}
+
+		/*
+		 * Timer is implemented.
+		 */
+		int duration = 0;
+		Rectangle2D timer = new Rectangle2D.Double(450, 250, 50, 50);
+		if (!isComplete()) {
+			end = System.currentTimeMillis() / 1000;
+			duration = (int) (end - start);
+			this.timer.setString("" + duration + "s");
+			this.timer.setFontSize(15.0);
+			this.timer.setColor(Color.black);
+			this.timer.centerInside(timer);
+			this.timer.draw(g);
+		} else {
+			this.timer.setString("" + (int) (end - start) + "s");
+			this.timer.setFontSize(15.0);
+			this.timer.setColor(Color.black);
+			this.timer.centerInside(timer);
+			this.timer.draw(g);
 		}
 
 		for (SudokuCell cell : this.grid) {
@@ -260,7 +328,7 @@ public class SudokuMain extends GFX {
 	}
 
 	public static void main(String[] args) {
-		System.out.println("Sudoku Started!");
+//		System.out.println("Sudoku Started!");
 		GFX app = new SudokuMain();
 		app.start();
 	}
