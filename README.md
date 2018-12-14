@@ -1,4 +1,12 @@
-# P5 Skeleton
+# CSC212 Final Project: Sudoku Game
 
-This is a basically empty project (it draws a red window) in case you're doing Graphics for P5 and don't want to cannibalize one of your older projects.
+This is final project for CSC212 Data Structure class in fall 2018.
+
+We create a Sudoku Game with 9*9 grid. There are three different levels to choose for player(easy/medium/difficult).
+Enjoy!
+
+Visualization by Lillian Jiang
+Algorithm by Arianne Hu
+Instructor: J.Foley
+
 
